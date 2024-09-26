@@ -1,0 +1,21 @@
+
+
+link:proxy.adoc[Padrão Proxy]
+
+- aspectJ:https://www.baeldung.com/aspectj
+
+- link: sdasdfs[Google]
+
+link:tools.html#editors[dddddddddddd]
+
+
+
+
+- https://docs.spring.io/spring-framework/reference/core/aop/introduction-defn.html
+
+
+Sobre o Padrão Proxy
+
+https://refactoring.guru/pt-br/design-patterns/proxy/java/example
+https://www.youtube.com/watch?v=elf0DoWEyqE
+

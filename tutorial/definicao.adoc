@@ -1,0 +1,40 @@
+== Sobre Aspectos
+
+Vamos começar definindo alguns conceitos e terminologia centrais de AOP. Estes termos não são Específico do Spring. 
+Infelizmente, a terminologia AOP não é particularmente intuitiva. No entanto, seria ainda mais confuso se o Spring usasse sua própria terminologia.
+
+ - *Aspecto*: Uma preocupação que atravessa várias classes. O gerenciamento de transações é um bom exemplo de uma preocupação transversal no Java corporativo Aplicativos. 
+No Spring AOP, os aspectos são implementados usando classes regulares (a abordagem baseada em esquema) ou classes regulares anotadas com a anotação no estilo @AspectJ.
+
+ - *Ponto de junção(Join point)*: Um ponto durante a execução de um programa, como a execução de um ou o tratamento de uma exceção. No Spring AOP, um ponto de junção sempre representa uma execução de método.
+
+ - *Conselho | Aviso(Advice)*: Ação tomada por um aspecto em um determinado ponto de junção. Diferentes tipos de _advices_ incluem conselhos **"around"**, **"before"** e **"after"**. (Os tipos de aconselhamento serão discutidos mais tarde.) Muitos frameworks AOP, incluindo o Spring, modelam um aviso como um interceptador e mantem uma cadeia de interceptadores ao redor do ponto de junção.
+
+ - *Corte de ponto(Pointcut)*: um predicado que corresponde a pontos de junção. O aconselhamento está associado a um _pointcut_ e é executada em qualquer ponto de junção correspondente ao pointcut (por exemplo, a execução de um método com um determinado nome). O conceito de pontos de junção conforme correspondido por expressões pointcut é central para AOP, e o Spring usa o pointcut AspectJ expressão por padrão.
+
+Introdução: Declarando métodos ou campos adicionais em nome de um tipo. Primavera O AOP permite introduzir novas interfaces (e uma implementação correspondente) a qualquer objeto aconselhado. Por exemplo, você pode usar uma introdução para fazer um bean implementar uma interface, para simplificar o armazenamento em cache. (Uma introdução é conhecida como um declaração intertipo na comunidade AspectJ.)IsModified
+
+ - *Objeto alvo(target)*: Um objeto que está sendo aconselhado por um ou mais aspectos. Também referido como o "objeto aconselhado". Como o Spring AOP é implementado usando proxies de tempo de execução, este object é sempre um objeto proxy.
+
+ - *Proxy AOP*: Um objeto criado pela estrutura AOP para implementar o aspecto contratos (execuções de métodos de aconselhamento e assim por diante). No Spring Framework, um proxy AOP é um proxy dinâmico JDK ou um proxy CGLIB.
+
+ - *Tecelagem(Weaving)*: vinculando aspectos com outros tipos de aplicativos ou objetos para criar um objeto aconselhado. Isso pode ser feito em tempo de compilação (usando o compilador AspectJ, por exemplo), tempo de carregamento ou em tempo de execução. Spring AOP, como outros frameworks Java AOP puros, executa a tecelagem em tempo de execução.
+
+
+==== O Spring AOP inclui os seguintes tipos de conselhos:
+
+ - *Antes do conselho(Before advice:)*: conselho que é executado antes de um ponto de junção, mas que não tem a capacidade de impedir que o fluxo de execução prossiga para o ponto de junção (a menos que ele lance uma exceção).
+
+ - *Após o retorno do aconselhamento(After returning advice)*: Aconselhamento a ser executado após a conclusão de um ponto de junção normalmente (por exemplo, se um método retornar sem lançar uma exceção).
+
+ - *Após o lançamento de conselhos(After throwing advice)*: Conselhos a serem executados se um método sair lançando um exceção.
+
+ - *Após(After)* (finalmente) conselho: Conselhos a serem executados independentemente do meio pelo qual um Saídas de ponto de junção (retorno normal ou excepcional).
+
+ - *Em torno de conselhos(Around advice)*: conselhos que envolvem um ponto de junção, como uma invocação de método. Este é o tipo de conselho mais poderoso. O conselho pode executar um comportamento personalizado antes e depois da invocação do método. Também é responsável por escolher se deve prossiga para o ponto de junção ou para atalho na execução do método aconselhado, retornando seu próprio valor de retorno ou lançando uma exceção.
+
+O conselho em torno é o tipo mais geral de conselho. Desde a primavera AOP, como AspectJ, fornece uma gama completa de tipos de conselhos, recomendamos que você use o menos poderoso tipo de conselho que pode implementar o comportamento necessário. Por exemplo, se você precisar apenas atualizar um cache com o valor retornado de um método, é melhor implementar um depois de retornar conselhos do que um conselho ao redor, embora um conselho ao redor possa realizar a mesma coisa. O uso do tipo de aconselhamento mais específico fornece um modelo de programação mais simples com menor potencial de erros. Por exemplo, você não precisa invocar o método no used for around advice e, portanto, não pode deixar de invocá-lo.proceed()JoinPoint
+
+Todos os parâmetros de aconselhamento são tipados estaticamente para que você trabalhe com parâmetros de aconselhamento com o tipo apropriado (por exemplo, o tipo do valor retornado de uma execução de método) em vez de do que matrizes.Object
+
+O conceito de pontos de junção combinados por pointcuts é a chave para o AOP, que distingue de tecnologias mais antigas que oferecem apenas interceptação. Os cortes de pontos permitem que o aconselhamento seja direcionado independentemente da hierarquia orientada a objetos. Por exemplo, você pode aplicar um em torno de conselhos que fornecem gerenciamento de transações declarativas para um conjunto de métodos que abrangem vários objetos (como todas as operações de negócios na camada de serviço).
