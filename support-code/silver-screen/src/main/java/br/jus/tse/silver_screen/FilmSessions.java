@@ -16,9 +16,11 @@ import java.net.http.HttpResponse;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-public class FilmSessions {
 
-    private void showParsedJson(String json) throws IOException {
+public class FilmSessions implements MovieSessions{
+
+    private String parseMovieSessions(String json) throws IOException {
+
         ObjectMapper mapper = new ObjectMapper();
         JsonNode node = mapper.readTree(json);
 
@@ -45,15 +47,12 @@ public class FilmSessions {
 
         }
         String jsonArrayAsString = mapperCreator.writerWithDefaultPrettyPrinter().writeValueAsString(arrayNode);
-        System.out.println("                 ***************************           ");
-        System.out.println(jsonArrayAsString);
+
+        return jsonArrayAsString;
     }
-    public static void main(String[] args) {
-        FilmSessions f = new FilmSessions();
+    public String retrieveMovieSessions(){
         String formattedDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE);
         String uri="https://api-content.ingresso.com/v0/sessions/city/113/theater/381/partnership/home/groupBy/sessionType?date=".concat(formattedDate);
-
-        System.out.println(uri);
         HttpClient client = HttpClient.newHttpClient();
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -66,14 +65,20 @@ public class FilmSessions {
         try {
             response = client.send(request, HttpResponse.BodyHandlers.ofString());
             String json = response.body();
-            f.showParsedJson(json);
-            //System.out.println(uri);
+            return parseMovieSessions(json);
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
 
+    }
+    public static void main(String[] args) {
+        FilmSessions f = new FilmSessions();
+        long starting_time = System.currentTimeMillis();
+        f.retrieveMovieSessions();
+        long ending_time = System.currentTimeMillis();
+        System.out.println("                 *************************** Tempo de execução:" + (ending_time-starting_time));
 
     }
 }
