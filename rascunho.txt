@@ -1,0 +1,159 @@
+@param String name
+
+<!DOCTYPE html lang="pt-br">
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Hello JTE</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">Server Side Events</a>
+      </div>
+    </nav>
+   
+    <main class="container py-4 px-3 mx-auto">
+      <div class="card">
+        <div class="card-header"> Avisos</div>
+        <div class="card-body">
+          <h5 class="card-title">Mensagem Recebida</h5>
+          <p class="card-text" id="msg-text">${name}</p>
+        </div>
+      </div>
+    </main>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script>
+        var xhr = function(url) {
+          return new Promise(function(resolve, reject) {
+            try {
+              var xmhr = new XMLHttpRequest();
+      
+              //Listen for API Response
+              xmhr.onreadystatechange = function() {
+                if (xmhr.readyState == XMLHttpRequest.DONE && xmhr.status == 200) return resolve(xmhr.responseText);
+              };
+      
+              //Open connection
+              xmhr.open("GET", url, true);
+              //Additional headers as needed
+              //x.withCredentials = true;
+              //x.setRequestHeader("Accept", "application/json");
+              //x.setRequestHeader("Content-Type", "text/plain");
+      
+              //Perform the actual AJAX call
+              xmhr.send();
+      
+            } catch (ex) {
+              reject("Exception: Oh CORS's you've made a mistake!");
+            }
+          });
+      };
+     
+
+     var sse = new EventSource('http://localhost:8522/api-sse');
+      sse.onmessage = function (evt) {
+        var el = document.getElementById('msg-text');
+        el.appendChild(document.createTextNode(evt.data));
+        el.appendChild(document.createElement('br'))
+      };
+      
+    </script>
+  </body>
+</html>
+
+/*****************************************************************************/
+
+@Controller
+
+@RequestMapping("/")
+public class IndexController {
+    
+    private final ExecutorService nonBlockingService = Executors.newCachedThreadPool();
+    
+    private Optional<MensagemResponse> mensageResponse = Optional.empty();
+    private LocalDateTime ultimaAlteracao =  LocalDateTime.now();
+    @GetMapping()
+    public ModelAndView indexPage() {
+        ModelAndView mv = new ModelAndView();
+        mv.setStatus(HttpStatusCode.valueOf(200));
+        mv.setViewName("index");
+        return mv;
+        
+    }
+    
+    private boolean emiteNovoAviso() {
+        return mensageResponse.isPresent() && ultimaAlteracao.isBefore(mensageResponse.get().horario());
+    }
+  
+    @GetMapping("/api-sse")
+    public SseEmitter handleSse() {
+        SseEmitter emitter = new SseEmitter();
+       
+        nonBlockingService.execute(() -> {
+            try {
+                
+                System.out.println(emiteNovoAviso());
+                if (emiteNovoAviso()) {
+                   emitter.send("api-sse@"+LocalDateTime.now() );
+                   emitter.send(mensageResponse);
+                   this.ultimaAlteracao = mensageResponse.get().horario();
+                }
+                emitter.complete();
+                
+            } catch (Exception ex) {
+                emitter.completeWithError(ex);
+            }
+        });
+
+        return emitter;
+    }
+    
+     @PostMapping( value="/generate-response",  headers = "Accept=application/json")
+    public ResponseEntity<String> generateResponse(@RequestBody MensagemRequest mensagem) {
+        MensagemResponse response = new MensagemResponse(mensagem.getAviso() , mensagem.getHora());
+        
+        this.mensageResponse = Optional.of(response);
+        
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.set("My-Custom-Header", "My-Custom-Value");
+        return new ResponseEntity<>("Feito", responseHeaders, HttpStatus.OK);
+        
+    }
+}
+/********************************************************************************************/
+
+
+public class MensagemRequest {
+    
+    private LocalDateTime hora = LocalDateTime.now();
+    
+    private String aviso;
+
+    public LocalDateTime getHora() {
+        return this.hora;
+    }
+
+    public void setHora(LocalDateTime hora) {
+        this.hora = hora;
+    }
+
+    public String getAviso() {
+        return this.aviso;
+    }
+
+    public void setAviso(String aviso) {
+        this.aviso = aviso;
+    }
+    
+}
+
+/********************************************************/
+
+
+public record MensagemResponse(String aviso, LocalDateTime horario) {
+   
+}
