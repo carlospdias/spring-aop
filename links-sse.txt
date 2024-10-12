@@ -1,0 +1,2 @@
+Link muito bom
+https://medium.com/@AlexanderObregon/implementing-server-sent-events-sse-with-spring-cbf283171aef
