@@ -1,2 +1,81 @@
 Link muito bom
 https://medium.com/@AlexanderObregon/implementing-server-sent-events-sse-with-spring-cbf283171aef
+,
+
+
+
+https://www.youtube.com/watch?v=T_JZzdPCkOU&t=1526s
+
+
+-------------------
+
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+@RestController
+public class SseController {
+
+    @GetMapping(path = "/sse", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter subscribe() {
+        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+        // Add the emitter to a list of subscribers or handle it in another way
+        return emitter;
+    }
+}
+
+
+import java.util.concurrent.CopyOnWriteArrayList;
+
+@Service
+public class SseService {
+
+    private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
+
+    public void addEmitter(SseEmitter emitter) {
+        emitters.add(emitter);
+        emitter.onCompletion(() -> emitters.remove(emitter));
+        emitter.onTimeout(() -> emitters.remove(emitter));
+    }
+
+    @Scheduled(fixedRate = 1000)
+    public void sendEvents() {
+        for (SseEmitter emitter : emitters) {
+            try {
+                emitter.send(System.currentTimeMillis());
+            } catch (IOException e) {
+                emitter.complete();
+                emitters.remove(emitter);
+            }
+        }
+    }
+}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spring SSE Demo</title>
+</head>
+<body>
+    <h1>Server-Sent Events (SSE) with Spring</h1>
+    <div id="events"></div>
+
+    <script>
+        const eventSource = new EventSource("/sse");
+
+        eventSource.onmessage = (event) => {
+            const div = document.createElement("div");
+            div.textContent = `Event received: ${event.data}`;
+            document.getElementById("events").appendChild(div);
+        };
+
+        eventSource.onerror = (error) => {
+            console.error("Error occurred:", error);
+            eventSource.close();
+        };
+    </script>
+</body>
+</html>
