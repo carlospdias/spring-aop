@@ -2,6 +2,7 @@ Link muito bom
 https://medium.com/@AlexanderObregon/implementing-server-sent-events-sse-with-spring-cbf283171aef
 ,
 
+https://medium.com/@AlexanderObregon/how-to-implement-server-sent-events-sse-in-spring-boot-620024272ccb
 
 
 https://www.youtube.com/watch?v=T_JZzdPCkOU&t=1526s
